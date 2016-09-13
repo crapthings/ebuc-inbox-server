@@ -1,8 +1,18 @@
 var fs = require('fs')
 var util = require('util')
+
 var async = require('async')
+
 var express = require('express')
 var multiparty = require('multiparty')
+
+const WebSocket = require('ws')
+var DDP = require('ddp.js').default
+
+var ddp = new DDP({
+  endpoint: "ws://localhost:3000/websocket",
+  SocketConstructor: WebSocket
+})
 
 var server = express()
 
@@ -36,13 +46,13 @@ server.post('/webhook', function(req, res) {
   }())
 
   form.parse(req, function(err, fields) {
-    console.log(util.inspect(fields.mailinMsg, {
-      depth: 5
-    }))
+    // console.log(util.inspect(fields.mailinMsg, {
+    //   depth: 5
+    // }))
 
-    console.log(JSON.stringify(fields.mailinMsg, null, 4))
+    // console.log(JSON.stringify(fields.mailinMsg, null, 4))
 
-    console.log('Parsed fields: ' + Object.keys(fields))
+    // console.log('Parsed fields: ' + Object.keys(fields))
 
     /* Write down the payload for ulterior inspection. */
     async.auto({
@@ -61,6 +71,7 @@ server.post('/webhook', function(req, res) {
         res.sendStatus(500, 'Unable to write payload')
       } else {
         console.log('Webhook payload written.')
+        ddp.method('inbox:create', [fields.mailinMsg])
         res.sendStatus(200)
       }
     })
